@@ -99,7 +99,8 @@ change `DEBUG = bool(int(os.environ.get("DEBUG", 0)))`
 
 after `ALLOWED_HOSTS = [] `
 
-add ```
+add 
+```
 ALLOWED_HOSTS.extend(filter(None, os.environ.get("ALLOWED_HOSTS", "").splut(",")))
 ```
 
@@ -158,3 +159,9 @@ DATABASES = {
     }
 }
 ```
+
+### Rebuild the docker container to include the updates
+`docker-compose build`
+
+### Create a new core app in the project
+`docker-compose run --rm app sh -c "python manage.py startapp core"`
