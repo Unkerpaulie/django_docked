@@ -16,3 +16,6 @@ venv/
 
 # loacal postgresql data
 data/
+
+# documentation
+readme.md

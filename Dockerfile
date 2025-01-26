@@ -16,6 +16,8 @@ RUN python -m venv /venv && \
 
 COPY ./app /app
 
+# append the venv executables to the system path to run
 ENV PATH="/venv/bin:$PATH"
 
+# set the user in the system to app
 USER app
