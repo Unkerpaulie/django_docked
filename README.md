@@ -165,3 +165,14 @@ DATABASES = {
 
 ### Create a new core app in the project
 `docker-compose run --rm app sh -c "python manage.py startapp core"`
+
+### Create models for application
+
+### Run makemigrations and migrate
+`docker-compose run --rm app sh -c "python manage.py makemigrations"`
+`docker-compose run --rm app sh -c "python manage.py migrate"`
+
+### Set a "wait for db" directive to avoid errors
+created a django command to try the database connection and wait until it connects
+
+### Envoke this command through docker compose
