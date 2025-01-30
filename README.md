@@ -168,11 +168,25 @@ DATABASES = {
 
 ### Create models for application
 
-### Run makemigrations and migrate
+### Run makemigrations
 `docker-compose run --rm app sh -c "python manage.py makemigrations"`
+The following commands are necessary to make sure the db is connected, migrate changes to the db, and run the server
+`docker-compose run --rm app sh -c "python manage.py wait_for_db"`
 `docker-compose run --rm app sh -c "python manage.py migrate"`
+`docker-compose run --rm app sh -c "python manage.py runserver 0.0.0.0:8000"`
 
-### Set a "wait for db" directive to avoid errors
+### Set a "wait for db" directive before migrating to avoid errors 
 created a django command to try the database connection and wait until it connects
 
-### Envoke this command through docker compose
+### Envoke the list of commands through docker compose
+```
+    command: >
+      sh -c "python manage.py wait_for_db &&
+      python manage.py migrate && 
+      python manage.py runserver 0.0.0.0:8000"
+```
+
+### Use docker-compose to restart the docker container with the new commands added
+`docker-compose up`
+
+
