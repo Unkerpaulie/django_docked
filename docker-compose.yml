@@ -14,6 +14,8 @@ services:
       - 8000:8000
     volumes:
       - ./app:/app
+      # below maps the contents of the vol folder back to our dev folder
+      - ./vol:/vol
     environment:
       - SECRET_KEY=myownsecretKee
       - DEBUG=1

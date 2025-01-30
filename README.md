@@ -189,4 +189,45 @@ created a django command to try the database connection and wait until it connec
 ### Use docker-compose to restart the docker container with the new commands added
 `docker-compose up`
 
+# Handling Static and Media files
+
+### Establish directory for static and media in Dockerfile
+```
+# create an app user and create vol folder for media and static files
+RUN adduser --disabled-password --no-create-home app && \
+    mkdir -p /vol/static && \
+    mkdir -p /vol/media && \
+    chown -R app:app /vol && \
+    chmod -R 755 /vol
+```
+
+### Update settings.py to handle the meida and static locations
+```
+STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+
+STATIC_ROOT = '/vol/static'
+MEDIA_ROOT = '/vol/media'
+```
+
+### Change the main urls.py file to serve the media files in development
+In urls.py, at the top add
+```
+from django.conf.urls.static import static
+from django.conf import settings
+```
+
+and at the bottom add
+```
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+```
+
+### Create a superuser account in django
+`docker-compose run --rm app sh -c "python manage.py createsuperuser"`
+
+### Restart the docker service
+`docker-compose up`
+
+### Login to Django admin and test the file upload in the backend
 
