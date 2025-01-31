@@ -231,3 +231,98 @@ if settings.DEBUG:
 
 ### Login to Django admin and test the file upload in the backend
 
+# Production Server Configuration
+
+Create a folder in the project named "proxy"
+```
+proxy
+  |
+  |- uwsgi_params
+  |- Dockerfile
+  |- default.conf.tpl
+  |- run.sh
+```
+
+### uwsgi_params
+```
+uwsgi_param QUERY_STRING $query_string;
+uwsgi_param REQUEST_METHOD $request_method;
+uwsgi_param CONTENT_TYPE $content_type;
+uwsgi_param CONTENT_LENGTH $content_length;
+uwsgi_param REQUEST_URI $request_uri;
+uwsgi_param PATH_INFO $document_uri;
+uwsgi_param DOCUMENT_ROOT $document_root;
+uwsgi_param SERVER_PROTOCOL $server_protocol;
+uwsgi_param REMOTE_ADDR $remote_addr;
+uwsgi_param REMOTE_PORT $remote_port;
+uwsgi_param SERVER_ADDR $server_addr;
+uwsgi_param SERVER_PORT $server_port;
+uwsgi_param SERVER_NAME $server_name;
+```
+
+### default.conf.tpl
+This configures nginx configuration template with placeholder values
+```
+server {
+    listen ${LISTEN_PORT};
+
+    location /static {
+        alias           /vol/static;
+    }
+
+    location /media {
+        alias           /vol/media;
+    }
+
+    location / {
+        uwsgi_pass              ${APP_HOST}:${APP_PORT};
+        include                 /etc/nginx/wsgi_params;
+        client_max_body_size    10M;
+    }
+}
+```
+
+### run.sh
+This script pulls the environment variables and substitutes them into the placeholders in the nginx configuration template above
+```
+#!/bin/sh
+
+set -e
+
+envsubst < /etc/nginx/default.conf.tpl > /etc/nginx/conf.d/default.conf
+
+nginx -g 'daemon off;'
+```
+
+### Dockerfile
+```
+FROM nginxinc/nginx-unpriveleged:1-alpine
+
+LABEL maintainer="sablos@hotmail.com"
+
+COPY ./default.conf.tpl /etc/nginx/default.conf.tpl
+COPY ./uwsgi_params /etc/nginx/uwsgi_params
+COPY ./run.sh /run.sh
+
+# set default env variables
+ENV LISTEN_PORT=8000
+ENV APP_HOST=app
+ENV APP_PORT=9000
+
+# create the static location and set permissions for copied files
+USER root
+
+RUN mkdir -p /vol && \
+    chmod 755 /vol && \
+    touch /etc/nginx/conf.d/default.conf && \
+    chown nginx:nginx /etc/nginx/conf.d/default.conf && \
+    chmod +x /run.sh
+
+VOLUME /vol
+
+USER nginx
+
+CMD [ "/run.sh" ]
+```
+
+### Create a script in the Django project that connects it to the proxy
