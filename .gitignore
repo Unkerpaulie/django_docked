@@ -9,3 +9,8 @@ media
 *.ipynb
 
 vol
+
+venv
+.env
+venv.bak/
+env.bak/

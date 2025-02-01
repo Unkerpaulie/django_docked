@@ -1,4 +1,4 @@
-FROM nginxinc/nginx-unpriveleged:1-alpine
+FROM nginxinc/nginx-unprivileged:1-alpine
 
 LABEL maintainer="sablos@hotmail.com"
 
