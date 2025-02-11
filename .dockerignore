@@ -19,3 +19,6 @@ data/
 
 # documentation
 readme.md
+
+# ssh key
+*.pem

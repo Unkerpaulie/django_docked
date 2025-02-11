@@ -1,4 +1,5 @@
 # django_docked
+Completely base on this [tutorial](https://www.youtube.com/watch?v=mScd-Pc_pX0)
 
 ### Prerequisites
 * Docker installed
@@ -101,7 +102,7 @@ after `ALLOWED_HOSTS = [] `
 
 add 
 ```
-ALLOWED_HOSTS.extend(filter(None, os.environ.get("ALLOWED_HOSTS", "").splut(",")))
+ALLOWED_HOSTS.extend(filter(None, os.environ.get("ALLOWED_HOSTS", "").split(",")))
 ```
 
 ### Set the environment variables in docker compose
@@ -136,7 +137,7 @@ ALLOWED_HOSTS.extend(filter(None, os.environ.get("ALLOWED_HOSTS", "").splut(",")
 
 ### Add Postgres driver to the application from Dockerfile
 In the Dockerfile, add these to the list of RUN commands
-```
+``` 
     apk add --update --no-cache postgresql-client && \
     apk add --update --no-cache --virtual .temp-deps \
         build-base postgresql-dev musl-dev && \
@@ -148,7 +149,7 @@ In the Dockerfile, add these to the list of RUN commands
 add `psycopg2>=2.8.6,<2.9`
 
 ### Modify settings.py to include the database connection
-```
+``` py
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -179,7 +180,7 @@ The following commands are necessary to make sure the db is connected, migrate c
 created a django command to try the database connection and wait until it connects
 
 ### Envoke the list of commands through docker compose
-```
+``` yml
     command: >
       sh -c "python manage.py wait_for_db &&
       python manage.py migrate && 
@@ -192,7 +193,7 @@ created a django command to try the database connection and wait until it connec
 # Handling Static and Media files
 
 ### Establish directory for static and media in Dockerfile
-```
+``` Dockerfile
 # create an app user and create vol folder for media and static files
 RUN adduser --disabled-password --no-create-home app && \
     mkdir -p /vol/static && \
@@ -202,7 +203,7 @@ RUN adduser --disabled-password --no-create-home app && \
 ```
 
 ### Update settings.py to handle the meida and static locations
-```
+``` py
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
@@ -212,13 +213,13 @@ MEDIA_ROOT = '/vol/media'
 
 ### Change the main urls.py file to serve the media files in development
 In urls.py, at the top add
-```
+``` py
 from django.conf.urls.static import static
 from django.conf import settings
 ```
 
 and at the bottom add
-```
+``` py
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 ```
@@ -262,7 +263,7 @@ uwsgi_param SERVER_NAME $server_name;
 
 ### default.conf.tpl
 This configures nginx configuration template with placeholder values
-```
+``` tpl
 server {
     listen ${LISTEN_PORT};
 
@@ -284,7 +285,7 @@ server {
 
 ### run.sh
 This script pulls the environment variables and substitutes them into the placeholders in the nginx configuration template above
-```
+``` sh
 #!/bin/sh
 
 set -e
@@ -295,7 +296,7 @@ nginx -g 'daemon off;'
 ```
 
 ### Dockerfile
-```
+``` Dockerfile
 FROM nginxinc/nginx-unpriveleged:1-alpine
 
 LABEL maintainer="sablos@hotmail.com"
@@ -326,3 +327,20 @@ CMD [ "/run.sh" ]
 ```
 
 ### Create a script in the Django project that connects it to the proxy
+With all the proxy configuration files done, creat a folder in the project root called `scripts` and a fil called `run.sh` inside
+``` sh
+#!/bin/sh
+
+set -e
+
+python manage.py wait_for_db
+python manage.py collectstatic --noinput
+python manage.py migrate
+
+uwsgi --socket :9000 --workers 4 --master --enable-threads --module app.wsgi
+```
+
+### Add uWSGI to requirements.txt
+`uWSGI>=2.0.19.1,<2.1`
+
+### Edit the Dockerfile to include the changes
