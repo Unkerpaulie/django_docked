@@ -14,8 +14,9 @@ app/*/*/*/__pycache__/
 .venv
 venv/
 
-# loacal postgresql data
+# backup volumes
 data/
+vol/
 
 # documentation
 readme.md
